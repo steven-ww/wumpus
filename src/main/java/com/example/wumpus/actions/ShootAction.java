@@ -23,10 +23,12 @@ public class ShootAction {
 
     public void shootArrow(Cave[] caves, Player player) {
         player.setNumberOfArrows(player.getNumberOfArrows()-1);
+
         int noOfCavesToShootInto = getValidNumberOfCavesToShootInto();
         ArrayList<Integer> cavesToShootInto = getCavesToShootInto(player.getCurrentRoom(), noOfCavesToShootInto);
         shootArrowThroughCaves(caves, cavesToShootInto, player.getCurrentRoom(), player);
-        if (player.getState() == player.getState().ALIVE && player.getNumberOfArrows() == 0) {
+
+        if (player.getState() == Player.PlayerState.ALIVE && player.getNumberOfArrows() == 0) {
             output.println("You have no more arrows left. You lose.");
             player.setState(Player.PlayerState.DEAD);
         }
@@ -35,44 +37,37 @@ public class ShootAction {
     private void shootArrowThroughCaves(Cave[] caves,
                                         ArrayList<Integer> cavesToShootInto,
                                         int currentCaveIndex, Player player) {
-        boolean arrowIsFlyingTrue = true;
+        boolean arrowIsOnCourse = true;
 
-        for (int caveIndex : cavesToShootInto) {
-
-            if (arrowIsFlyingTrue) {
+        for (int nominatedCave : cavesToShootInto) {
+            if (arrowIsOnCourse) {
                 OptionalInt maybeCaveInd = Arrays.stream(caves[currentCaveIndex].getLinkedCaves())
-                        .filter(linkedCaveInd -> linkedCaveInd == caveIndex).findAny();
+                        .filter(linkedCaveInd -> linkedCaveInd == nominatedCave).findAny();
 
                 if (maybeCaveInd.isPresent()) {
                     currentCaveIndex = maybeCaveInd.getAsInt();
-                    if (checkForWumpus(caves, currentCaveIndex, player)) {
-                        return;
-                    }
-                    if (currentCaveIndex == player.getCurrentRoom()) {
-                        output.println("Your arrow flew into cave " + currentCaveIndex + " and you shot yourself!");
-                        player.setState(Player.PlayerState.DEAD);
-                        return;
-                    }
                 } else {
-                    arrowIsFlyingTrue = false;
-                    output.println("Your arrow couldn't find cave " + caveIndex + " from cave " + currentCaveIndex +
+                    output.println("Your arrow couldn't find cave " + nominatedCave + " from cave " + currentCaveIndex +
                             " and is flying off course!");
+                    arrowIsOnCourse = false;
+                    int randomLinkedCaveIndex = randomGenerator.nextInt(3);
+                    currentCaveIndex = caves[currentCaveIndex].getLinkedCaves()[randomLinkedCaveIndex];
                 }
             } else {
-                int randdomLinkedCave = randomGenerator.nextInt(3);
-                currentCaveIndex = caves[currentCaveIndex].getLinkedCaves()[randdomLinkedCave];
-                if (checkForWumpus(caves, currentCaveIndex, player)) {
-                    return;
-                }
-                if (currentCaveIndex == player.getCurrentRoom()) {
-                    output.println("Your arrow flew into cave " + currentCaveIndex + " and you shot yourself!");
-                    player.setState(Player.PlayerState.DEAD);
-                    return;
-                }
+                int randomLinkedCaveIndex = randomGenerator.nextInt(3);
+                currentCaveIndex = caves[currentCaveIndex].getLinkedCaves()[randomLinkedCaveIndex];
+            }
+
+            if (checkForWumpus(caves, currentCaveIndex, player)) {
+                return;
+            }
+            if (currentCaveIndex == player.getCurrentRoom()) {
+                output.println("Your arrow flew into cave " + currentCaveIndex + " and you shot yourself!");
+                player.setState(Player.PlayerState.DEAD);
+                return;
             }
         }
         output.println("Your arrow missed and flew into cave " + currentCaveIndex + ".");
-
     }
 
     private boolean checkForWumpus(Cave[] caves, int caveIndex, Player player) {
