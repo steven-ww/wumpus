@@ -22,9 +22,14 @@ public class ShootAction {
     }
 
     public void shootArrow(Cave[] caves, Player player) {
+        player.setNumberOfArrows(player.getNumberOfArrows()-1);
         int noOfCavesToShootInto = getValidNumberOfCavesToShootInto();
         ArrayList<Integer> cavesToShootInto = getCavesToShootInto(player.getCurrentRoom(), noOfCavesToShootInto);
         shootArrowThroughCaves(caves, cavesToShootInto, player.getCurrentRoom(), player);
+        if (player.getState() == player.getState().ALIVE && player.getNumberOfArrows() == 0) {
+            output.println("You have no more arrows left. You lose.");
+            player.setState(Player.PlayerState.DEAD);
+        }
     }
 
     private void shootArrowThroughCaves(Cave[] caves,
