@@ -4,9 +4,7 @@ import com.example.wumpus.actions.HazardChecker;
 import com.example.wumpus.actions.PlayerMovement;
 import com.example.wumpus.io.ConsoleInput;
 
-import java.util.Arrays;
 import java.util.Scanner;
-import java.util.random.RandomGenerator;
 
 public class Hunt {
     Cave[] caves = new Cave[20];
@@ -52,10 +50,13 @@ public class Hunt {
             printPlayerCave(player);
             hazardChecker.printHazards(caves, player.currentRoom);
             switch (IO.readln("Shoot or move? (S/M) ").toUpperCase()) {
-                case "S": runShoot(); break;
-                case "M": runMove(); break;
-            };
-
+                case "S":
+                    runShoot();
+                    break;
+                case "M":
+                    runMove();
+                    break;
+            }
         }
     }
 

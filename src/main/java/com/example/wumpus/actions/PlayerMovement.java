@@ -29,8 +29,7 @@ public class PlayerMovement {
                 } else {
                     IO.println("You can't move to cave " + caveToMoveTo + " from here.");
                 }
-            }
-            catch (NumberFormatException e) {
+            } catch (NumberFormatException e) {
                 IO.println("You can't move to cave " + destination + " from here.");
             }
         }
