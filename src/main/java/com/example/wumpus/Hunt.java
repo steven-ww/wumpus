@@ -2,6 +2,7 @@ package com.example.wumpus;
 
 import com.example.wumpus.actions.HazardChecker;
 import com.example.wumpus.actions.PlayerMovement;
+import com.example.wumpus.actions.ShootAction;
 import com.example.wumpus.io.ConsoleInput;
 import com.example.wumpus.io.ConsoleOutput;
 
@@ -17,6 +18,7 @@ public class Hunt {
 
     PlayerMovement playerMovement = new PlayerMovement(input);
     HazardChecker hazardChecker = new HazardChecker(output);
+    ShootAction shootAction = new ShootAction(input, output);
 
     public void runGame() {
         caves = cavesService.buildCaves();
@@ -60,6 +62,7 @@ public class Hunt {
                 case "M":
                     runMove();
                     break;
+                default: output.println("That's not a valid action. Please enter S to shoot or M to move.");
             }
         }
     }
@@ -71,7 +74,7 @@ public class Hunt {
 
 
     private void runShoot() {
-
+        shootAction.shootArrow(caves, player);
     }
 
     private void printPlayerCave(Player player) {
