@@ -30,11 +30,12 @@ public class PlayerMovement {
                     IO.println("You can't move to cave " + caveToMoveTo + " from here.");
                 }
             } catch (NumberFormatException e) {
-                IO.println("You can't move to cave " + destination + " from here.");
+                if (destination.equalsIgnoreCase("exit")) {
+                    moving = false;
+                } else {
+                    IO.println("You can't move to cave " + destination + " from here.");
+                }
             }
         }
-
-
-
     }
 }
