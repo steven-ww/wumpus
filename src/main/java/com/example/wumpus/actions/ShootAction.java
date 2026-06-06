@@ -4,6 +4,7 @@ import com.example.wumpus.Cave;
 import com.example.wumpus.Player;
 import com.example.wumpus.io.Input;
 import com.example.wumpus.io.Output;
+import org.jspecify.annotations.NonNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,7 +25,7 @@ public class ShootAction {
     }
 
 
-    public void shootArrow(Cave[] caves, Player player) {
+    public void shootArrow(Cave[] caves, @NonNull Player player) {
         player.setNumberOfArrows(player.getNumberOfArrows()-1);
 
         int noOfCavesToShootInto = getValidNumberOfCavesToShootInto();
@@ -37,9 +38,9 @@ public class ShootAction {
         }
     }
 
-    private void shootArrowThroughCaves(Cave[] caves,
-                                        ArrayList<Integer> cavesToShootInto,
-                                        int currentCaveIndex, Player player) {
+    private void shootArrowThroughCaves(@NonNull Cave[] caves,
+                                        @NonNull ArrayList<Integer> cavesToShootInto,
+                                        int currentCaveIndex, @NonNull Player player) {
         boolean arrowIsOnCourse = true;
 
         for (int nominatedCave : cavesToShootInto) {
