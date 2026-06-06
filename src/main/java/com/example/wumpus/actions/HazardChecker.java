@@ -24,7 +24,7 @@ public class HazardChecker {
                 int newCave = random.nextInt(caves.length);
                 player.setCurrentRoom(newCave);
                 IO.println("Giant bats picked you up and dropped you in cave " + newCave + "!");
-                checkForHazards(caves, player);
+//                checkForHazards(caves, player);
             }
             if (currentCave.isBottomLessPit()) {
                 IO.println("You fell into a bottomless pit. You lose.");
