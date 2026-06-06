@@ -81,6 +81,22 @@ class ShootActionTest {
         assertEquals("10", input.getInputsHandled().get(4));
     }
 
+    @Test
+    void testShootArrow_CannotShootIntoPreviousRoom() {
+        player.setCurrentRoom(0);
+        input.addInput("3"); // Number of caves
+        input.addInput("1"); // Cave 0? OK
+        input.addInput("2"); // Cave 1? OK
+        input.addInput("1"); // Cave 2? Invalid (just left room 1)
+        input.addInput("3"); // Cave 2? OK
+
+        shootAction.shootArrow(caves, player);
+
+        assertTrue(output.getMessages().contains("Arrows aren't that crooked — pick another cave."));
+        assertEquals(5, input.getPrompts().size());
+        assertEquals("3", input.getInputsHandled().get(4));
+    }
+
     private static class TestInput implements Input {
         private final Queue<String> inputs = new LinkedList<>();
         private final List<String> prompts = new ArrayList<>();
