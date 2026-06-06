@@ -1,11 +1,20 @@
 package com.example.wumpus;
 
+import com.example.wumpus.actions.HazardChecker;
+import com.example.wumpus.actions.PlayerMovement;
+import com.example.wumpus.io.ConsoleInput;
+
+import java.util.Arrays;
 import java.util.Scanner;
+import java.util.random.RandomGenerator;
 
 public class Hunt {
     Cave[] caves = new Cave[20];
     CavesService cavesService = new CavesService();
     Player player = new Player();
+
+    PlayerMovement playerMovement = new PlayerMovement(new ConsoleInput());
+    HazardChecker hazardChecker = new HazardChecker();
 
     public void runGame() {
         caves = cavesService.buildCaves();
@@ -39,11 +48,34 @@ public class Hunt {
     }
 
     public void startGameLoop() {
-        while (player.state == PlayerState.ALIVE) {
-            IO.println("You are in cave " + player.currentRoom + ". Tunnels lead to caves " +
-                    caves[player.currentRoom].linkedCaves[0] + ", " +
-                    caves[player.currentRoom].linkedCaves[1] + " and " +
-                    caves[player.currentRoom].linkedCaves[2]);
+        while (player.state == Player.PlayerState.ALIVE) {
+            printPlayerCave(player);
+            hazardChecker.printHazards(caves, player.currentRoom);
+            switch (IO.readln("Shoot or move? (S/M) ").toUpperCase()) {
+                case "S": runShoot(); break;
+                case "M": runMove(); break;
+            };
+
         }
     }
+
+    private void runMove() {
+        playerMovement.movePlayer(caves, player);
+        hazardChecker.checkForHazards(caves, player);
+
+    }
+
+
+    private void runShoot() {
+
+    }
+
+    private void printPlayerCave(Player player) {
+        IO.println("You are in cave " + player.currentRoom + ". Tunnels lead to caves " +
+                caves[player.currentRoom].linkedCaves[0] + ", " +
+                caves[player.currentRoom].linkedCaves[1] + " and " +
+                caves[player.currentRoom].linkedCaves[2]);
+    }
+    
+
 }

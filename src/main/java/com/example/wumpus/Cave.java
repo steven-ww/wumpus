@@ -20,7 +20,7 @@ public class Cave {
 
     Boolean hasPlayer = false;
 
-    Cave(int[] linkedCaves) {
+    public Cave(int[] linkedCaves) {
         this.linkedCaves = linkedCaves;
     }
 
@@ -50,5 +50,9 @@ public class Cave {
 
     public void setHasWumpus(Boolean hasWumpus) {
         this.hasWumpus = hasWumpus;
+    }
+
+    public boolean hasHazard() {
+        return isBottomLessPit || hasBats || hasWumpus;
     }
 }
