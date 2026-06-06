@@ -30,9 +30,7 @@ public class Player {
     }
 
 
-
-}
-
-enum PlayerState {
-    ALIVE, DEAD, WINNER
+    public enum PlayerState {
+        ALIVE, DEAD, WINNER
+    }
 }
