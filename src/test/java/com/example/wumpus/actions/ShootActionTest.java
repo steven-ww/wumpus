@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import java.util.random.RandomGenerator;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -20,6 +21,7 @@ class ShootActionTest {
     private ShootAction shootAction;
     private TestInput input;
     private TestOutput output;
+    private TestRandom random;
     private Cave[] caves;
     private Player player;
 
@@ -27,7 +29,9 @@ class ShootActionTest {
     void setUp() {
         input = new TestInput();
         output = new TestOutput();
+        random = new TestRandom();
         shootAction = new ShootAction(input, output);
+        shootAction.randomGenerator = random;
         player = new Player();
         caves = new Cave[20];
         for (int i = 0; i < 20; i++) {
@@ -97,6 +101,132 @@ class ShootActionTest {
         assertEquals("3", input.getInputsHandled().get(4));
     }
 
+    @Test
+    void testShootArrow_HitsWumpusOnPath() {
+        player.setCurrentRoom(0);
+        caves[2].setHasWumpus(true); // Cave 0 links to 1, 2, 19
+        input.addInput("1");
+        input.addInput("2");
+
+        shootAction.shootArrow(caves, player);
+
+        assertEquals(Player.PlayerState.WINNER, player.getState());
+        assertTrue(output.getMessages().stream()
+                .anyMatch(m -> m.contains("killed the Wumpus! You win!")));
+    }
+
+    @Test
+    void testShootArrow_HitsPlayerOnPath() {
+        player.setCurrentRoom(0);
+        // Valid loop: 0 -> 2 -> 1 -> 0
+        // Links: 0: (1,2,19), 2: (3,4,1), 1: (2,3,0)
+        input.addInput("3");
+        input.addInput("2");
+        input.addInput("1");
+        input.addInput("0");
+
+        shootAction.shootArrow(caves, player);
+
+        assertEquals(Player.PlayerState.DEAD, player.getState());
+        assertTrue(output.getMessages().contains("Your arrow flew into cave 0 and you shot yourself!"));
+    }
+
+    @Test
+    void testShootArrow_MissesEverythingOnPath() {
+        player.setCurrentRoom(0);
+        // Path 0 -> 1 -> 2
+        input.addInput("2");
+        input.addInput("1");
+        input.addInput("2");
+
+        shootAction.shootArrow(caves, player);
+
+        assertEquals(Player.PlayerState.ALIVE, player.getState());
+        assertTrue(output.getMessages().contains("Your arrow missed and flew into cave 2."));
+    }
+
+    @Test
+    void testShootArrow_OffCourse_HitsWumpus() {
+        player.setCurrentRoom(0);
+        // Wumpus in cave 3
+        caves[3].setHasWumpus(true);
+        // Nomination: 1 (valid), 10 (invalid -> off course), 5 (random)
+        input.addInput("3");
+        input.addInput("1");
+        input.addInput("10");
+        input.addInput("5");
+
+        // From cave 1, links are {2, 3, 0}
+        // Index 1 corresponds to cave 3
+        random.setNextInt(1);
+
+        shootAction.shootArrow(caves, player);
+
+        assertEquals(Player.PlayerState.WINNER, player.getState());
+        assertTrue(output.getMessages().contains(
+                "Your arrow couldn't find cave 10 from cave 1 and is flying off course!"));
+        assertTrue(output.getMessages().stream()
+                .anyMatch(m -> m.contains("flew into cave 3 and killed the Wumpus!")));
+    }
+
+    @Test
+    void testShootArrow_OffCourse_HitsPlayer() {
+        player.setCurrentRoom(0);
+        // Nomination: 1 (valid), 10 (invalid -> off course), 5 (random)
+        input.addInput("3");
+        input.addInput("1");
+        input.addInput("10");
+        input.addInput("5");
+
+        // From cave 1, links are {2, 3, 0}
+        // Index 2 corresponds to cave 0
+        random.setNextInt(2);
+
+        shootAction.shootArrow(caves, player);
+
+        assertEquals(Player.PlayerState.DEAD, player.getState());
+        assertTrue(output.getMessages().contains(
+                "Your arrow couldn't find cave 10 from cave 1 and is flying off course!"));
+        assertTrue(output.getMessages().contains("Your arrow flew into cave 0 and you shot yourself!"));
+    }
+
+    @Test
+    void testShootArrow_OffCourse_MissesEverything() {
+        player.setCurrentRoom(0);
+        // Nomination: 1 (valid), 10 (invalid -> off course), 5 (random)
+        input.addInput("3");
+        input.addInput("1");
+        input.addInput("10");
+        input.addInput("5");
+
+        // From cave 1, links are {2, 3, 0}
+        // Index 0 corresponds to cave 2
+        random.setNextInt(0);
+
+        shootAction.shootArrow(caves, player);
+
+        assertEquals(Player.PlayerState.ALIVE, player.getState());
+        assertTrue(output.getMessages().contains(
+                "Your arrow couldn't find cave 10 from cave 1 and is flying off course!"));
+        assertTrue(output.getMessages().contains("Your arrow missed and flew into cave 2."));
+    }
+
+    @Test
+    void testShootArrow_OutOfArrows_Dead() {
+        player.setCurrentRoom(0);
+        player.setNumberOfArrows(1);
+
+        // Shoot 1 cave, and miss
+        input.addInput("1");
+        input.addInput("1");
+
+        shootAction.shootArrow(caves, player);
+
+        assertEquals(0, player.getNumberOfArrows());
+        assertEquals(Player.PlayerState.DEAD, player.getState());
+        assertTrue(output.getMessages().contains("You have no more arrows left. You lose."));
+    }
+
     private static class TestInput implements Input {
         private final Queue<String> inputs = new LinkedList<>();
         private final List<String> prompts = new ArrayList<>();
@@ -133,6 +263,29 @@ class ShootActionTest {
 
         public List<String> getMessages() {
             return messages;
+        }
+    }
+
+    private static class TestRandom implements RandomGenerator {
+        private int nextInt;
+
+        public void setNextInt(int nextInt) {
+            this.nextInt = nextInt;
+        }
+
+        @Override
+        public int nextInt() {
+            return nextInt;
+        }
+
+        @Override
+        public int nextInt(int bound) {
+            return nextInt;
+        }
+
+        @Override
+        public long nextLong() {
+            return 0;
         }
     }
 }
