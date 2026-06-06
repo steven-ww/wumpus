@@ -17,7 +17,7 @@ public class PlayerMovement {
     public void movePlayer(Cave[] caves, Player player) {
         boolean moving = true;
         while (moving) {
-            String destination = input.readln("Move to which cave?");
+            String destination = input.readln("Move to which cave? ");
             try {
                 int caveToMoveTo = Integer.parseInt(destination);
                 OptionalInt caveMovedTo = Arrays.stream(caves[player.getCurrentRoom()].getLinkedCaves())
