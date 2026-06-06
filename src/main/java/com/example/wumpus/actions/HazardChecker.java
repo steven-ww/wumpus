@@ -2,11 +2,19 @@ package com.example.wumpus.actions;
 
 import com.example.wumpus.Cave;
 import com.example.wumpus.Player;
+import com.example.wumpus.io.Output;
 
 import java.util.Arrays;
 import java.util.random.RandomGenerator;
 
 public class HazardChecker {
+
+    Output output;
+
+    public HazardChecker(Output output) {
+      this.output = output;
+    }
+
     RandomGenerator random = RandomGenerator.getDefault();
 
     public void checkForHazards(Cave[] caves, Player player) {
@@ -14,20 +22,19 @@ public class HazardChecker {
         if (currentCave.hasHazard()) {
             if (currentCave.hasWumpus()) {
                 bumpTheWumpus(caves, currentCave);
-                IO.println("You bumped into the Wumpus!");
+                output.println("You bumped into the Wumpus!");
                 if (currentCave.hasWumpus()) {
-                    IO.println("The Wumpus found you and ate you. You lose.");
+                    output.println("The Wumpus found you and ate you. You lose.");
                     player.setState(Player.PlayerState.DEAD);
                 }
             }
             if (currentCave.hasBats()) {
                 int newCave = random.nextInt(caves.length);
                 player.setCurrentRoom(newCave);
-                IO.println("Giant bats picked you up and dropped you in cave " + newCave + "!");
-//                checkForHazards(caves, player);
+                output.println("Giant bats picked you up and dropped you in cave " + newCave + "!");
             }
             if (currentCave.isBottomLessPit()) {
-                IO.println("You fell into a bottomless pit. You lose.");
+                output.println("You fell into a bottomless pit. You lose.");
                 player.setState(Player.PlayerState.DEAD);
             }
         }
@@ -49,15 +56,15 @@ public class HazardChecker {
 
     private void printHazard(Cave cave) {
         if (cave.hasBats()) {
-            IO.println("You hear the flapping of giant bats nearby.");
+            output.println("You hear the flapping of giant bats nearby.");
             return;
         }
         if (cave.hasWumpus()) {
-            IO.println("You smell something terrible nearby.");
+            output.println("You smell something terrible nearby.");
             return;
         }
         if (cave.isBottomLessPit()) {
-            IO.println("You feel a cold draft from a nearby cave.");
+            output.println("You feel a cold draft from a nearby cave.");
         }
     }
 }
