@@ -21,14 +21,10 @@ public class HazardChecker {
         Cave currentCave = caves[player.getCurrentRoom()];
         if (currentCave.hasHazard()) {
             if (currentCave.hasWumpus()) {
-                bumpTheWumpus(caves, currentCave);
                 output.println("You bumped into the Wumpus!");
-                if (currentCave.hasWumpus()) {
-                    output.println("The Wumpus found you and ate you. You lose.");
-                    player.setState(Player.PlayerState.DEAD);
-                }
+                bumpTheWumpus(caves, currentCave, player);
             }
-            if (currentCave.hasBats()) {
+            if (player.getState() == Player.PlayerState.ALIVE && currentCave.hasBats()) {
                 int newCave = random.nextInt(caves.length);
                 player.setCurrentRoom(newCave);
                 output.println("Giant bats picked you up and dropped you in cave " + newCave + "!");
@@ -40,13 +36,24 @@ public class HazardChecker {
         }
     }
 
-    private void bumpTheWumpus(Cave[] caves, Cave currentCave) {
+    public void bumpTheWumpus(Cave[] caves, Cave currentCave, Player player) {
         int newWumpusCaveOption = random.nextInt(4);
         if (newWumpusCaveOption < 3 ) {
             int wumpusCaveNumber = currentCave.getLinkedCaves()[newWumpusCaveOption];
             caves[wumpusCaveNumber].setHasWumpus(true);
             currentCave.setHasWumpus(false);
         }
+        if (caves[player.getCurrentRoom()].hasWumpus()) {
+            output.println("The Wumpus found you and ate you. You lose.");
+            player.setState(Player.PlayerState.DEAD);
+        }
+    }
+
+    public Cave getWumpusCave(Cave[] caves) {
+        return Arrays.stream(caves)
+                .filter(Cave::hasWumpus)
+                .findAny()
+                .orElseThrow(() -> new RuntimeException("No cave has the Wumpus!"));
     }
 
     public void printHazards(Cave[] caves, int room) {

@@ -15,11 +15,14 @@ public class ShootAction {
     Input input;
     Output output;
     RandomGenerator randomGenerator = RandomGenerator.getDefault();
+    HazardChecker hazardChecker;
 
     public ShootAction(Input input, Output output) {
         this.output = output;
         this.input = input;
+        this.hazardChecker = new HazardChecker(output);
     }
+
 
     public void shootArrow(Cave[] caves, Player player) {
         player.setNumberOfArrows(player.getNumberOfArrows()-1);
@@ -68,6 +71,7 @@ public class ShootAction {
             }
         }
         output.println("Your arrow missed and flew into cave " + currentCaveIndex + ".");
+        hazardChecker.bumpTheWumpus(caves, hazardChecker.getWumpusCave(caves), player);
     }
 
     private boolean checkForWumpus(Cave[] caves, int caveIndex, Player player) {
