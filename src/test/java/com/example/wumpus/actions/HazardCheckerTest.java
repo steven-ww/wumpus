@@ -49,7 +49,8 @@ class HazardCheckerTest {
 
         // Assert
         assertEquals(targetRoom, player.getCurrentRoom());
-        assertTrue(output.getMessages().contains("Giant bats picked you up and dropped you in cave " + targetRoom + "!"));
+        assertTrue(output.getMessages().contains(
+                "Giant bats picked you up and dropped you in cave " + targetRoom + "!"));
     }
 
     @Test
