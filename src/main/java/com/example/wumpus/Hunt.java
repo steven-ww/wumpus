@@ -10,11 +10,11 @@ import java.util.Scanner;
 
 public class Hunt {
     Cave[] caves = new Cave[20];
-    CavesService cavesService = new CavesService();
-    Player player = new Player();
+    final CavesService cavesService = new CavesService();
+    final Player player = new Player();
 
-    private ConsoleInput input = new ConsoleInput();
-    private ConsoleOutput output = new ConsoleOutput();
+    private final ConsoleInput input = new ConsoleInput();
+    private final ConsoleOutput output = new ConsoleOutput();
 
     PlayerMovement playerMovement = new PlayerMovement(input);
     HazardChecker hazardChecker = new HazardChecker(output);
