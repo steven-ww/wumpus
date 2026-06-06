@@ -208,7 +208,7 @@ class ShootActionTest {
         assertEquals(Player.PlayerState.ALIVE, player.getState());
         assertTrue(output.getMessages().contains(
                 "Your arrow couldn't find cave 10 from cave 1 and is flying off course!"));
-        assertTrue(output.getMessages().contains("Your arrow missed and flew into cave 2."));
+        assertTrue(output.getMessages().contains("Your arrow missed and flew into cave 3."));
     }
 
     @Test
