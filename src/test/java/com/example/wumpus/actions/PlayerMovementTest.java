@@ -2,13 +2,6 @@ package com.example.wumpus.actions;
 
 import com.example.wumpus.Cave;
 import com.example.wumpus.Player;
-import com.example.wumpus.io.ConsoleInput;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-import java.lang.reflect.Method;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class PlayerMovementTest {
 
