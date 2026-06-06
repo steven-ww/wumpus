@@ -65,6 +65,14 @@ public class Hunt {
                 default: output.println("That's not a valid action. Please enter S to shoot or M to move.");
             }
         }
+        switch (player.state) {
+            case WINNER:
+                output.println("Congratulations! You have slain the Wumpus and won the game!");
+                break;
+            case DEAD:
+                output.println("Game over. Better luck next time!");
+                break;
+        }
     }
 
     private void runMove() {
