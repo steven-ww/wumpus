@@ -3,6 +3,7 @@ package com.example.wumpus;
 import com.example.wumpus.actions.HazardChecker;
 import com.example.wumpus.actions.PlayerMovement;
 import com.example.wumpus.io.ConsoleInput;
+import com.example.wumpus.io.ConsoleOutput;
 
 import java.util.Scanner;
 
@@ -11,8 +12,11 @@ public class Hunt {
     CavesService cavesService = new CavesService();
     Player player = new Player();
 
-    PlayerMovement playerMovement = new PlayerMovement(new ConsoleInput());
-    HazardChecker hazardChecker = new HazardChecker();
+    private ConsoleInput input = new ConsoleInput();
+    private ConsoleOutput output = new ConsoleOutput();
+
+    PlayerMovement playerMovement = new PlayerMovement(input);
+    HazardChecker hazardChecker = new HazardChecker(output);
 
     public void runGame() {
         caves = cavesService.buildCaves();
@@ -40,7 +44,7 @@ public class Hunt {
         IO.println();
         Scanner scanner = new Scanner(System.in);
 
-        System.out.println("Press Enter to continue...");
+        output.println("Press Enter to continue...");
         scanner.nextLine();
         startGameLoop();
     }
@@ -49,7 +53,7 @@ public class Hunt {
         while (player.state == Player.PlayerState.ALIVE) {
             printPlayerCave(player);
             hazardChecker.printHazards(caves, player.currentRoom);
-            switch (IO.readln("Shoot or move? (S/M) ").toUpperCase()) {
+            switch (input.readln("Shoot or move? (S/M) ").toUpperCase()) {
                 case "S":
                     runShoot();
                     break;
@@ -63,7 +67,6 @@ public class Hunt {
     private void runMove() {
         playerMovement.movePlayer(caves, player);
         hazardChecker.checkForHazards(caves, player);
-
     }
 
 
@@ -72,7 +75,7 @@ public class Hunt {
     }
 
     private void printPlayerCave(Player player) {
-        IO.println("You are in cave " + player.currentRoom + ". Tunnels lead to caves " +
+        output.println("You are in cave " + player.currentRoom + ". Tunnels lead to caves " +
                 caves[player.currentRoom].linkedCaves[0] + ", " +
                 caves[player.currentRoom].linkedCaves[1] + " and " +
                 caves[player.currentRoom].linkedCaves[2]);
