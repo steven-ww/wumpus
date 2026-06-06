@@ -147,6 +147,52 @@ class HazardCheckerTest {
         assertTrue(output.getMessages().contains("You feel a cold draft from a nearby cave."));
     }
 
+    @Test
+    void testGetWumpusCave() {
+        // Arrange
+        int wumpusRoom = 7;
+        caves[wumpusRoom].setHasWumpus(true);
+
+        // Act
+        Cave wumpusCave = hazardChecker.getWumpusCave(caves);
+
+        // Assert
+        assertSame(caves[wumpusRoom], wumpusCave);
+        assertTrue(wumpusCave.hasWumpus());
+    }
+
+    @Test
+    void testBumpTheWumpus_Stays() {
+        // Arrange
+        int wumpusRoom = 0;
+        caves[wumpusRoom].setHasWumpus(true);
+        // Option 3 means stay
+        random.setNextInt(3);
+
+        // Act
+        hazardChecker.bumpTheWumpus(caves, caves[wumpusRoom], player);
+
+        // Assert
+        assertTrue(caves[wumpusRoom].hasWumpus());
+    }
+
+    @Test
+    void testBumpTheWumpus_Moves() {
+        // Arrange
+        int wumpusRoom = 0;
+        caves[wumpusRoom].setHasWumpus(true);
+        // Cave 0 links to {1, 2, 19}
+        // Option 1 means move to index 1 (cave 2)
+        random.setNextInt(1);
+
+        // Act
+        hazardChecker.bumpTheWumpus(caves, caves[wumpusRoom], player);
+
+        // Assert
+        assertFalse(caves[wumpusRoom].hasWumpus());
+        assertTrue(caves[2].hasWumpus());
+    }
+
     private static class TestOutput implements Output {
         private final List<String> messages = new ArrayList<>();
 

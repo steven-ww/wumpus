@@ -15,6 +15,7 @@ import java.util.random.RandomGenerator;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 class ShootActionTest {
 
@@ -32,11 +33,20 @@ class ShootActionTest {
         random = new TestRandom();
         shootAction = new ShootAction(input, output);
         shootAction.randomGenerator = random;
+        shootAction.hazardChecker.random = random;
         player = new Player();
         caves = new Cave[20];
         for (int i = 0; i < 20; i++) {
             caves[i] = new Cave(new int[]{(i + 1) % 20, (i + 2) % 20, (i + 19) % 20});
         }
+        setWumpus(18);
+    }
+
+    private void setWumpus(int room) {
+        for (Cave cave : caves) {
+            cave.setHasWumpus(false);
+        }
+        caves[room].setHasWumpus(true);
     }
 
     @Test
@@ -104,7 +114,7 @@ class ShootActionTest {
     @Test
     void testShootArrow_HitsWumpusOnPath() {
         player.setCurrentRoom(0);
-        caves[2].setHasWumpus(true); // Cave 0 links to 1, 2, 19
+        setWumpus(2); // Cave 0 links to 1, 2, 19
         input.addInput("1");
         input.addInput("2");
 
@@ -149,7 +159,7 @@ class ShootActionTest {
     void testShootArrow_OffCourse_HitsWumpus() {
         player.setCurrentRoom(0);
         // Wumpus in cave 3
-        caves[3].setHasWumpus(true);
+        setWumpus(3);
         // Nomination: 1 (valid), 10 (invalid -> off course), 5 (random)
         input.addInput("3");
         input.addInput("1");
@@ -225,6 +235,51 @@ class ShootActionTest {
         assertEquals(0, player.getNumberOfArrows());
         assertEquals(Player.PlayerState.DEAD, player.getState());
         assertTrue(output.getMessages().contains("You have no more arrows left. You lose."));
+    }
+
+    @Test
+    void testShootArrow_Miss_WumpusMoves() {
+        player.setCurrentRoom(0);
+        int wumpusStartCave = 5;
+        setWumpus(wumpusStartCave);
+
+        // Arrow misses
+        input.addInput("1");
+        input.addInput("1"); // Shoot into cave 1
+
+        // Wumpus movement:
+        // Option < 3 means move.
+        // Cave 5 links are {(5+1)%20, (5+2)%20, (5+19)%20} = {6, 7, 4}
+        // Option 0 means move to index 0 (cave 6)
+        random.setNextInt(0);
+
+        shootAction.shootArrow(caves, player);
+
+        assertTrue(output.getMessages().contains("Your arrow missed and flew into cave 1."));
+        assertFalse(caves[wumpusStartCave].hasWumpus());
+        assertTrue(caves[6].hasWumpus());
+    }
+
+    @Test
+    void testShootArrow_Miss_WumpusMovesToPlayerCave() {
+        player.setCurrentRoom(0);
+        // Cave 0 links to {1, 2, 19}
+        // Place Wumpus in cave 1
+        setWumpus(1);
+
+        // Arrow misses
+        input.addInput("1");
+        input.addInput("2"); // Shoot into cave 2
+
+        // Wumpus movement:
+        // Cave 1 links to {2, 3, 0}
+        // Option 2 means move to index 2 (cave 0, where player is)
+        random.setNextInt(2);
+
+        shootAction.shootArrow(caves, player);
+
+        assertEquals(Player.PlayerState.DEAD, player.getState());
+        assertTrue(output.getMessages().contains("The Wumpus found you and ate you. You lose."));
     }
 
     private static class TestInput implements Input {
