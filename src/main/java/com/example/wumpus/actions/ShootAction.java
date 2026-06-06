@@ -27,7 +27,9 @@ public class ShootAction {
         shootArrowThroughCaves(caves, cavesToShootInto, player.getCurrentRoom(), player);
     }
 
-    private void shootArrowThroughCaves(Cave[] caves, ArrayList<Integer> cavesToShootInto, int currentCaveIndex, Player player) {
+    private void shootArrowThroughCaves(Cave[] caves,
+                                        ArrayList<Integer> cavesToShootInto,
+                                        int currentCaveIndex, Player player) {
         boolean arrowIsFlyingTrue = true;
 
         for (int caveIndex : cavesToShootInto) {
@@ -48,7 +50,8 @@ public class ShootAction {
                     }
                 } else {
                     arrowIsFlyingTrue = false;
-                    output.println("Your arrow couldn't find cave " + caveIndex + " from cave " + currentCaveIndex + " and is flying off course!");
+                    output.println("Your arrow couldn't find cave " + caveIndex + " from cave " + currentCaveIndex +
+                            " and is flying off course!");
                 }
             } else {
                 int randdomLinkedCave = randomGenerator.nextInt(3);
