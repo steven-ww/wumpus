@@ -27,3 +27,37 @@ jobs:
 
     - name: Build with Gradle
       run: ./gradlew build
+
+  native-windows:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up GraalVM 25
+      uses: graalvm/setup-graalvm@v1
+      with:
+        distribution: graalvm
+        java-version: '25'
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        cache: gradle
+        components: native-image
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v4
+
+    - name: Build JAR
+      run: .\gradlew.bat jar
+
+    - name: Build Windows native executable
+      shell: pwsh
+      run: |
+        New-Item -ItemType Directory -Force -Path build/native | Out-Null
+        $jar = Get-ChildItem -Path build/libs -Filter "*.jar" | Select-Object -First 1
+        native-image --no-fallback -jar $jar.FullName build/native/wumpus
+
+    - name: Upload Windows native executable
+      uses: actions/upload-artifact@v4
+      with:
+        name: wumpus-windows-native
+        path: build/native/wumpus.exe
