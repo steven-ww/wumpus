@@ -54,7 +54,7 @@ jobs:
       shell: pwsh
       run: |
         New-Item -ItemType Directory -Force -Path build/native | Out-Null
-        native-image --no-fallback -cp "build/install/wumpus/lib/*" com.example.wumpus.App build/native/wumpus
+        native-image --no-fallback -cp "build/install/wumpus/lib/*" -o build/native/wumpus com.example.wumpus.App
 
     - name: Upload Windows native executable
       uses: actions/upload-artifact@v4
