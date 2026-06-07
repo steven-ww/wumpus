@@ -1,12 +1,14 @@
-package com.example.wumpus.actions;
+package za.co.sww.game.wumpus.actions;
 
-import com.example.wumpus.Cave;
-import com.example.wumpus.Player;
-import com.example.wumpus.io.Output;
+import za.co.sww.game.wumpus.domain.Cave;
+import za.co.sww.game.wumpus.domain.Player;
+import za.co.sww.game.wumpus.io.Output;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.Arrays;
 import java.util.random.RandomGenerator;
 
+@NullMarked
 public class HazardChecker {
 
     Output output;

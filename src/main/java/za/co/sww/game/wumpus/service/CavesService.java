@@ -1,5 +1,6 @@
-package com.example.wumpus;
+package za.co.sww.game.wumpus.service;
 
+import za.co.sww.game.wumpus.domain.Cave;
 import java.util.random.RandomGenerator;
 
 public class CavesService {

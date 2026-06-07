@@ -1,9 +1,12 @@
-package com.example.wumpus;
+package za.co.sww.game.wumpus;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.random.RandomGenerator;
+
+import za.co.sww.game.wumpus.domain.Cave;
+import za.co.sww.game.wumpus.service.CavesService;
 import org.junit.jupiter.api.Test;
 
 /**

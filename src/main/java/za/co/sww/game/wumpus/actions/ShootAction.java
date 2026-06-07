@@ -1,16 +1,17 @@
-package com.example.wumpus.actions;
+package za.co.sww.game.wumpus.actions;
 
-import com.example.wumpus.Cave;
-import com.example.wumpus.Player;
-import com.example.wumpus.io.Input;
-import com.example.wumpus.io.Output;
-import org.jspecify.annotations.NonNull;
+import za.co.sww.game.wumpus.domain.Cave;
+import za.co.sww.game.wumpus.domain.Player;
+import za.co.sww.game.wumpus.io.Input;
+import za.co.sww.game.wumpus.io.Output;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.OptionalInt;
 import java.util.random.RandomGenerator;
 
+@NullMarked
 public class ShootAction {
 
     Input input;
@@ -25,7 +26,7 @@ public class ShootAction {
     }
 
 
-    public void shootArrow(Cave[] caves, @NonNull Player player) {
+    public void shootArrow(Cave[] caves, Player player) {
         player.setNumberOfArrows(player.getNumberOfArrows()-1);
 
         int noOfCavesToShootInto = getValidNumberOfCavesToShootInto();
@@ -38,9 +39,9 @@ public class ShootAction {
         }
     }
 
-    private void shootArrowThroughCaves(@NonNull Cave[] caves,
-                                        @NonNull ArrayList<Integer> cavesToShootInto,
-                                        int currentCaveIndex, @NonNull Player player) {
+    private void shootArrowThroughCaves(Cave[] caves,
+                                        ArrayList<Integer> cavesToShootInto,
+                                        int currentCaveIndex, Player player) {
         boolean arrowIsOnCourse = true;
 
         for (int nominatedCave : cavesToShootInto) {

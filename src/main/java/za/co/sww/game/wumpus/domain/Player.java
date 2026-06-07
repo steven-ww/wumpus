@@ -1,4 +1,4 @@
-package com.example.wumpus;
+package za.co.sww.game.wumpus.domain;
 
 public class Player {
     int numberOfArrows = 5;
