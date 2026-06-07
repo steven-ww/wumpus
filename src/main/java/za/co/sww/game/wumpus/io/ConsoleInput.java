@@ -1,4 +1,4 @@
-package com.example.wumpus.io;
+package za.co.sww.game.wumpus.io;
 
 public class ConsoleInput implements Input {
 

@@ -1,14 +1,17 @@
-package com.example.wumpus;
+package za.co.sww.game.wumpus.service;
 
-import com.example.wumpus.actions.HazardChecker;
-import com.example.wumpus.actions.PlayerMovement;
-import com.example.wumpus.actions.ShootAction;
-import com.example.wumpus.io.ConsoleInput;
-import com.example.wumpus.io.ConsoleOutput;
+import za.co.sww.game.wumpus.domain.Cave;
+import za.co.sww.game.wumpus.domain.Player;
+import za.co.sww.game.wumpus.actions.HazardChecker;
+import za.co.sww.game.wumpus.actions.PlayerMovement;
+import za.co.sww.game.wumpus.actions.ShootAction;
+import za.co.sww.game.wumpus.io.ConsoleInput;
+import za.co.sww.game.wumpus.io.ConsoleOutput;
+import org.jspecify.annotations.NonNull;
 
 import java.util.Scanner;
 
-public class Hunt {
+public class HuntService {
     Cave[] caves = new Cave[20];
     final CavesService cavesService = new CavesService();
     final Player player = new Player();
@@ -60,9 +63,9 @@ public class Hunt {
     }
 
     public void startGameLoop() {
-        while (player.state == Player.PlayerState.ALIVE) {
+        while (player.getState() == Player.PlayerState.ALIVE) {
             printPlayerCave(player);
-            hazardChecker.printHazards(caves, player.currentRoom);
+            hazardChecker.printHazards(caves, player.getCurrentRoom());
             switch (input.readln("Shoot or move? (S/M) ").toUpperCase()) {
                 case "S":
                     runShoot();
@@ -73,7 +76,7 @@ public class Hunt {
                 default: output.println("That's not a valid action. Please enter S to shoot or M to move.");
             }
         }
-        switch (player.state) {
+        switch (player.getState()) {
             case WINNER:
                 output.println("Congratulations! You have slain the Wumpus and won the game!");
                 break;
@@ -93,12 +96,11 @@ public class Hunt {
         shootAction.shootArrow(caves, player);
     }
 
-    private void printPlayerCave(Player player) {
-        output.println("You are in cave " + player.currentRoom + ". Tunnels lead to caves " +
-                caves[player.currentRoom].linkedCaves[0] + ", " +
-                caves[player.currentRoom].linkedCaves[1] + " and " +
-                caves[player.currentRoom].linkedCaves[2]);
+    private void printPlayerCave(@NonNull Player player) {
+        output.println("You are in cave " + player.getCurrentRoom() + ". Tunnels lead to caves " +
+                caves[player.getCurrentRoom()].getLinkedCaves()[0] + ", " +
+                caves[player.getCurrentRoom()].getLinkedCaves()[1] + " and " +
+                caves[player.getCurrentRoom()].getLinkedCaves()[2]);
     }
-    
 
 }
