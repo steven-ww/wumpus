@@ -46,15 +46,14 @@ jobs:
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v4
 
-    - name: Build JAR
-      run: .\gradlew.bat jar
+    - name: Build app distribution
+      run: .\gradlew.bat installDist
 
     - name: Build Windows native executable
       shell: pwsh
       run: |
         New-Item -ItemType Directory -Force -Path build/native | Out-Null
-        $jar = Get-ChildItem -Path build/libs -Filter "*.jar" | Select-Object -First 1
-        native-image --no-fallback -jar $jar.FullName build/native/wumpus
+        native-image --no-fallback -cp "build/install/wumpus/lib/*" com.example.wumpus.App build/native/wumpus
 
     - name: Upload Windows native executable
       uses: actions/upload-artifact@v4
