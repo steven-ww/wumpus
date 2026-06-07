@@ -14,7 +14,6 @@ import java.util.Scanner;
 public class HuntService {
     Cave[] caves = new Cave[20];
     final CavesService cavesService = new CavesService();
-    final Player player = new Player();
 
     private final ConsoleInput input = new ConsoleInput();
     private final ConsoleOutput output = new ConsoleOutput();
@@ -27,6 +26,7 @@ public class HuntService {
         boolean gameRunning = true;
         do {
 
+            Player player = new Player();
             caves = cavesService.buildCaves();
             player.setCurrentRoom(cavesService.initializeCaves(caves));
 
@@ -55,23 +55,23 @@ public class HuntService {
             output.println("Press Enter to continue...");
             scanner.nextLine();
 
-            startGameLoop();
+            startGameLoop(player);
             gameRunning = input.readln("Play again? (Y/N) ").toUpperCase().equals("Y");
 
         }
         while (gameRunning);
     }
 
-    public void startGameLoop() {
+    public void startGameLoop(Player player) {
         while (player.getState() == Player.PlayerState.ALIVE) {
             printPlayerCave(player);
             hazardChecker.printHazards(caves, player.getCurrentRoom());
             switch (input.readln("Shoot or move? (S/M) ").toUpperCase()) {
                 case "S":
-                    runShoot();
+                    runShoot(player);
                     break;
                 case "M":
-                    runMove();
+                    runMove(player);
                     break;
                 default: output.println("That's not a valid action. Please enter S to shoot or M to move.");
             }
@@ -86,13 +86,13 @@ public class HuntService {
         }
     }
 
-    private void runMove() {
+    private void runMove(Player player) {
         playerMovement.movePlayer(caves, player);
         hazardChecker.checkForHazards(caves, player);
     }
 
 
-    private void runShoot() {
+    private void runShoot(Player player) {
         shootAction.shootArrow(caves, player);
     }
 

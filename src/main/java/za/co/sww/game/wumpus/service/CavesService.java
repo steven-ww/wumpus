@@ -12,6 +12,7 @@ public class CavesService {
 
     public static final int WUMPUS_COUNT = 1;
     public static final int PLAYER_COUNT = 1;
+    final RandomGenerator random = RandomGenerator.getDefault();
 
     private int playerStartCaveIndex = 0;
 
@@ -63,7 +64,7 @@ public class CavesService {
      * @param caves the caves to assign pits to.
      */
     public int initializeCaves(Cave[] caves) {
-        return initializeCaves(caves, RandomGenerator.getDefault());
+        return initializeCaves(caves, random);
     }
 
     /**
