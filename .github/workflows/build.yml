@@ -55,7 +55,7 @@ jobs:
       run: |
         New-Item -ItemType Directory -Force -Path build/native | Out-Null
         $cp = (Get-ChildItem "build/install/wumpus/lib/*.jar" | ForEach-Object { $_.FullName }) -join ";"
-        native-image --no-fallback -cp $cp -o build/native/wumpus com.example.wumpus.App
+        native-image --no-fallback -cp $cp -o build/native/wumpus za.co.sww.game.wumpus.App
 
     - name: Upload Windows native executable
       uses: actions/upload-artifact@v4
