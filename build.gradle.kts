@@ -21,7 +21,7 @@ java {
 }
 
 application {
-    mainClass = "com.example.wumpus.App"
+    mainClass = "za.co.sww.game.wumpus.App"
 }
 
 checkstyle {
