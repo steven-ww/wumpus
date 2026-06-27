@@ -13,7 +13,9 @@
     <module name="TreeWalker">
         <module name="UnusedImports"/>
         <module name="RedundantImport"/>
-        <module name="NeedBraces"/>
+        <module name="NeedBraces">
+            <property name="allowSingleLineStatement" value="true"/>
+        </module>
         <module name="EmptyStatement"/>
         <module name="LeftCurly"/>
         <module name="RightCurly"/>

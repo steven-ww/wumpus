@@ -69,7 +69,9 @@ class HazardCheckerTest {
         // Assert
         assertEquals(pitRoom, player.getCurrentRoom());
         // If recursion works, player should be DEAD
-        assertEquals(Player.PlayerState.DEAD, player.getState(), "Player should be dead after falling into a pit from bats");
+        assertEquals(Player.PlayerState.DEAD,
+                player.getState(),
+                "Player should be dead after falling into a pit from bats");
         assertTrue(output.getMessages().contains("You fell into a bottomless pit. You lose."));
     }
 
