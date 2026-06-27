@@ -55,4 +55,15 @@ public class Cave {
     public boolean hasHazard() {
         return isBottomLessPit || hasBats || hasWumpus;
     }
+
+    public enum HazardType {
+        PIT, BATS, WUMPUS, NONE
+    }
+
+    public HazardType getHazardType() {
+        if (hasBats) return HazardType.BATS;
+        if (hasWumpus) return HazardType.WUMPUS;
+        if (isBottomLessPit) return HazardType.PIT;
+        return HazardType.NONE;
+    }
 }

@@ -21,21 +21,29 @@ public class HazardChecker {
 
     public void checkForHazards(Cave[] caves, Player player) {
         Cave currentCave = caves[player.getCurrentRoom()];
-        if (currentCave.hasHazard()) {
-            if (currentCave.hasWumpus()) {
-                output.println("You bumped into the Wumpus!");
-                bumpTheWumpus(caves, currentCave, player);
-            }
-            if (player.getState() == Player.PlayerState.ALIVE && currentCave.hasBats()) {
-                int newCave = random.nextInt(caves.length);
-                player.setCurrentRoom(newCave);
-                output.println("Giant bats picked you up and dropped you in cave " + newCave + "!");
-            }
-            if (currentCave.isBottomLessPit()) {
-                output.println("You fell into a bottomless pit. You lose.");
-                player.setState(Player.PlayerState.DEAD);
-            }
+        switch (currentCave.getHazardType()) {
+            case BATS -> handleBats(caves, player);
+            case WUMPUS -> handleWumpus(caves, currentCave, player);
+            case PIT -> handlePit(player);
+            case NONE -> { /* No hazard */ }
         }
+    }
+
+    private void handleBats(Cave[] caves, Player player) {
+        int newCave = random.nextInt(caves.length);
+        player.setCurrentRoom(newCave);
+        output.println("Giant bats picked you up and dropped you in cave " + newCave + "!");
+        checkForHazards(caves, player);
+    }
+
+    private void handleWumpus(Cave[] caves, Cave currentCave, Player player) {
+        output.println("You bumped into the Wumpus!");
+        bumpTheWumpus(caves, currentCave, player);
+    }
+
+    private void handlePit(Player player) {
+        output.println("You fell into a bottomless pit. You lose.");
+        player.setState(Player.PlayerState.DEAD);
     }
 
     public void bumpTheWumpus(Cave[] caves, Cave currentCave, Player player) {

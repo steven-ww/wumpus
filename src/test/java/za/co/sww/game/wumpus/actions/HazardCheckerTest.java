@@ -54,6 +54,26 @@ class HazardCheckerTest {
     }
 
     @Test
+    void testCheckForHazards_BatsDropIntoPit() {
+        // Arrange
+        int startRoom = 0;
+        int pitRoom = 5;
+        player.setCurrentRoom(startRoom);
+        caves[startRoom].setHasBats(true);
+        caves[pitRoom].setIsBottomLessPit(true);
+        random.setNextInt(pitRoom); // Bats will drop player here
+
+        // Act
+        hazardChecker.checkForHazards(caves, player);
+
+        // Assert
+        assertEquals(pitRoom, player.getCurrentRoom());
+        // If recursion works, player should be DEAD
+        assertEquals(Player.PlayerState.DEAD, player.getState(), "Player should be dead after falling into a pit from bats");
+        assertTrue(output.getMessages().contains("You fell into a bottomless pit. You lose."));
+    }
+
+    @Test
     void testCheckForHazards_BottomlessPit() {
         // Arrange
         int startRoom = 0;
