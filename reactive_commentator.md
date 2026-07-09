@@ -9,9 +9,10 @@ Quarkus LangChain4j should be used through its declarative AI service annotation
 Keep the boundary explicit:
 - Game logic remains pure from the LLM perspective. Movement, shooting, hazards, Wumpus movement, win/loss state, arrows, and randomness are resolved before any commentator call.
 - The client constructs a serializable `CommentarySnapshot` after an accepted player action has resolved.
-- The client sends the snapshot to the server asynchronously and immediately continues printing game state and accepting input.
+- The client sends the snapshot to the server and waits for the response before printing game state or accepting input.
+- The client should have a short timeout for the response and should indicate on the console that it's busy (not just hang). The timeout should be less than 5 seconds, assuming that's a reasonable time for the LLM to respond.
 - The server validates/sanitizes the snapshot, calls an annotation-based LangChain4j AI service, and returns a short `commentary` string.
-- The client appends commentary below the normal output when it arrives; failures are non-fatal and should be silent or debug-only.
+- Failures are non-fatal and should be silent or debug-only.
 ## Server changes in `../Wumpus-server`
 Replace the echo prompt endpoint with a commentary endpoint while preserving a compatibility path if useful during migration.
 Proposed API:
@@ -58,6 +59,7 @@ Add resilience:
 - Apply a short timeout around commentary generation.
 - Return a blank commentary or deterministic fallback quip on LLM failure, depending on desired UX.
 - Keep `EchoLlmGateway` or a `FallbackCommentaryService` for tests and local runs without keys.
+- Add a circuit breaker to avoid this API from being abused. No more than 1 request a second.
 Update tests:
 - Unit test prompt/service sanitization and fallback behavior without making real API calls.
 - REST test `POST /api/commentary` with a mocked/fake commentator service.
@@ -88,12 +90,10 @@ Build snapshots in `HuntService` after each resolved accepted action:
 - Include action, target room/path, outcome, player room, adjacent rooms, user-visible warnings, arrows remaining, moves taken, and previous action summaries.
 - Maintain a small in-memory ring buffer of last 2-3 summaries in `HuntService` or a dedicated `ActionHistory` class.
 - For hidden state, prefer not to send exact `wumpusRoom`, `pits`, or `bats` by default. If included for experimentation, guard it behind `WUMPUS_COMMENTARY_INCLUDE_HIDDEN_STATE=true` and document that it is only for local use.
-Handle async UX safely:
-- Dispatch commentary after normal output for the action is printed.
-- Do not block the next prompt on commentary.
+Quip on actions and results of actions:
+- The quick should be able to respond to an action and a later result of that action.
+- E.g. Action Move to room 5, could generate "You've been in 5 before, playing it safe are you". And then based on the result of that move where the wumpus got the player : "Ah, guess you weren't expecting the wumpus to have moved. So not so safe afterall"
 - When commentary arrives, print it with a clear prefix such as `Narrator: ...`.
-- Because console input and async output can interleave, centralize output through a synchronized `Output` implementation or a `ConsolePresenter` so commentary does not corrupt prompts.
-- If a newer action has already occurred, still allow the older quip if it is clearly prefixed, or drop stale responses using a monotonically increasing action sequence number.
 Update client tests:
 - Unit test snapshot construction for move, shoot miss, shoot hit, bat relocation, pit death, and Wumpus death cases using deterministic `RandomGenerator` injection.
 - Unit test that `NoopCommentaryClient` never affects gameplay.
@@ -108,8 +108,8 @@ Given this resolved game action snapshot, write one sardonic narrator comment. R
 Tone examples can be embedded in the system or user prompt:
 - Wow, missed again did you?
 - Haven't we been in room 5 before?
-- No, that's something you haven't tried before... oh wait.
-- How is it possible that you haven't been eaten yet?
+- No, that's something you haven't tried before... oh wait. You did already move through rooms 5 and 6.
+- How is it possible that you haven't been eaten yet given you've moved through so many rooms randomly?
 ## Security and configuration
 Do not commit secrets. The server should receive provider keys only through environment variables, local shell exports, `.env` files ignored by git, or GitHub Actions secrets.
 Local example:
