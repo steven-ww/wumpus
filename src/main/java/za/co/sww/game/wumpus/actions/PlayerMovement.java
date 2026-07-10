@@ -16,8 +16,9 @@ public class PlayerMovement {
         this.input = input;
     }
 
-    public void movePlayer(Cave[] caves, Player player) {
+    public MoveResult movePlayer(Cave[] caves, Player player) {
         boolean moving = true;
+        Integer targetRoom = null;
         while (moving) {
             String destination = input.readln("Move to which cave? ");
             try {
@@ -27,7 +28,8 @@ public class PlayerMovement {
                         .findAny();
                 if (caveMovedTo.isPresent()) {
                     player.setCurrentRoom(caveMovedTo.getAsInt());
-                    moving=false;
+                    targetRoom = caveMovedTo.getAsInt();
+                    moving = false;
                 } else {
                     IO.println("You can't move to cave " + caveToMoveTo + " from here.");
                 }
@@ -39,5 +41,9 @@ public class PlayerMovement {
                 }
             }
         }
+        return new MoveResult(targetRoom != null, targetRoom);
+    }
+
+    public record MoveResult(boolean moved, Integer targetRoom) {
     }
 }

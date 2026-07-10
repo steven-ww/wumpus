@@ -8,6 +8,7 @@ import org.jspecify.annotations.NullMarked;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.OptionalInt;
 import java.util.random.RandomGenerator;
 
@@ -26,22 +27,24 @@ public class ShootAction {
     }
 
 
-    public void shootArrow(Cave[] caves, Player player) {
+    public ShootResult shootArrow(Cave[] caves, Player player) {
         player.setNumberOfArrows(player.getNumberOfArrows()-1);
 
         int noOfCavesToShootInto = getValidNumberOfCavesToShootInto();
         ArrayList<Integer> cavesToShootInto = getCavesToShootInto(player.getCurrentRoom(), noOfCavesToShootInto);
-        shootArrowThroughCaves(caves, cavesToShootInto, player.getCurrentRoom(), player);
+        ShootResult shootResult = shootArrowThroughCaves(caves, cavesToShootInto, player.getCurrentRoom(), player);
 
         if (player.getState() == Player.PlayerState.ALIVE && player.getNumberOfArrows() == 0) {
             output.println("You have no more arrows left. You lose.");
             player.setState(Player.PlayerState.DEAD);
+            return new ShootResult("OUT_OF_ARROWS", cavesToShootInto, shootResult.finalArrowRoom());
         }
+        return shootResult;
     }
 
-    private void shootArrowThroughCaves(Cave[] caves,
-                                        ArrayList<Integer> cavesToShootInto,
-                                        int currentCaveIndex, Player player) {
+    private ShootResult shootArrowThroughCaves(Cave[] caves,
+                                               ArrayList<Integer> cavesToShootInto,
+                                               int currentCaveIndex, Player player) {
         boolean arrowIsOnCourse = true;
 
         for (int nominatedCave : cavesToShootInto) {
@@ -64,16 +67,21 @@ public class ShootAction {
             }
 
             if (checkForWumpus(caves, currentCaveIndex, player)) {
-                return;
+                return new ShootResult("SHOT_WUMPUS", cavesToShootInto, currentCaveIndex);
             }
             if (currentCaveIndex == player.getCurrentRoom()) {
                 output.println("Your arrow flew into cave " + currentCaveIndex + " and you shot yourself!");
                 player.setState(Player.PlayerState.DEAD);
-                return;
+                return new ShootResult("SHOT_SELF", cavesToShootInto, currentCaveIndex);
             }
         }
         output.println("Your arrow missed and flew into cave " + currentCaveIndex + ".");
-        hazardChecker.bumpTheWumpus(caves, hazardChecker.getWumpusCave(caves), player);
+        HazardChecker.HazardOutcome wumpusOutcome =
+                hazardChecker.bumpTheWumpus(caves, hazardChecker.getWumpusCave(caves), player);
+        if (wumpusOutcome == HazardChecker.HazardOutcome.WUMPUS_ATE_PLAYER) {
+            return new ShootResult("WUMPUS_BUMPED", cavesToShootInto, currentCaveIndex);
+        }
+        return new ShootResult("SHOT_MISSED", cavesToShootInto, currentCaveIndex);
     }
 
     private boolean checkForWumpus(Cave[] caves, int caveIndex, Player player) {
@@ -142,5 +150,8 @@ public class ShootAction {
             }
         }
         return number;
+    }
+
+    public record ShootResult(String outcome, List<Integer> path, Integer finalArrowRoom) {
     }
 }

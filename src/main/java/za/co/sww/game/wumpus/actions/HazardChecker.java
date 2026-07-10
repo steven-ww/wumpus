@@ -4,8 +4,10 @@ import za.co.sww.game.wumpus.domain.Cave;
 import za.co.sww.game.wumpus.domain.Player;
 import za.co.sww.game.wumpus.io.Output;
 import org.jspecify.annotations.NullMarked;
+import java.util.ArrayList;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.random.RandomGenerator;
 
 @NullMarked
@@ -19,34 +21,39 @@ public class HazardChecker {
 
     RandomGenerator random = RandomGenerator.getDefault();
 
-    public void checkForHazards(Cave[] caves, Player player) {
+    public HazardOutcome checkForHazards(Cave[] caves, Player player) {
         Cave currentCave = caves[player.getCurrentRoom()];
-        switch (currentCave.getHazardType()) {
+        return switch (currentCave.getHazardType()) {
             case BATS -> handleBats(caves, player);
             case WUMPUS -> handleWumpus(caves, currentCave, player);
             case PIT -> handlePit(player);
-            case NONE -> { /* No hazard */ }
-        }
+            case NONE -> HazardOutcome.SAFE;
+        };
     }
 
-    private void handleBats(Cave[] caves, Player player) {
+    private HazardOutcome handleBats(Cave[] caves, Player player) {
         int newCave = random.nextInt(caves.length);
         player.setCurrentRoom(newCave);
         output.println("Giant bats picked you up and dropped you in cave " + newCave + "!");
-        checkForHazards(caves, player);
+        HazardOutcome chainedOutcome = checkForHazards(caves, player);
+        if (chainedOutcome == HazardOutcome.SAFE) {
+            return HazardOutcome.BATS_RELOCATED;
+        }
+        return chainedOutcome;
     }
 
-    private void handleWumpus(Cave[] caves, Cave currentCave, Player player) {
+    private HazardOutcome handleWumpus(Cave[] caves, Cave currentCave, Player player) {
         output.println("You bumped into the Wumpus!");
-        bumpTheWumpus(caves, currentCave, player);
+        return bumpTheWumpus(caves, currentCave, player);
     }
 
-    private void handlePit(Player player) {
+    private HazardOutcome handlePit(Player player) {
         output.println("You fell into a bottomless pit. You lose.");
         player.setState(Player.PlayerState.DEAD);
+        return HazardOutcome.PIT_DEATH;
     }
 
-    public void bumpTheWumpus(Cave[] caves, Cave currentCave, Player player) {
+    public HazardOutcome bumpTheWumpus(Cave[] caves, Cave currentCave, Player player) {
         int newWumpusCaveOption = random.nextInt(4);
         if (newWumpusCaveOption < 3 ) {
             int wumpusCaveNumber = currentCave.getLinkedCaves()[newWumpusCaveOption];
@@ -56,7 +63,9 @@ public class HazardChecker {
         if (caves[player.getCurrentRoom()].hasWumpus()) {
             output.println("The Wumpus found you and ate you. You lose.");
             player.setState(Player.PlayerState.DEAD);
+            return HazardOutcome.WUMPUS_ATE_PLAYER;
         }
+        return HazardOutcome.WUMPUS_BUMPED;
     }
 
     public Cave getWumpusCave(Cave[] caves) {
@@ -67,21 +76,34 @@ public class HazardChecker {
     }
 
     public void printHazards(Cave[] caves, int room) {
-        Arrays.stream(caves[room].getLinkedCaves())
-                .forEach(caveIndex -> printHazard(caves[caveIndex]));
+        listHazardWarnings(caves, room).forEach(output::println);
     }
 
-    private void printHazard(Cave cave) {
+    public List<String> listHazardWarnings(Cave[] caves, int room) {
+        List<String> warnings = new ArrayList<>();
+        Arrays.stream(caves[room].getLinkedCaves())
+                .forEach(caveIndex -> maybeHazardWarning(caves[caveIndex]).ifPresent(warnings::add));
+        return warnings;
+    }
+
+    private java.util.Optional<String> maybeHazardWarning(Cave cave) {
         if (cave.hasBats()) {
-            output.println("You hear the flapping of giant bats nearby.");
-            return;
+            return java.util.Optional.of("You hear the flapping of giant bats nearby.");
         }
         if (cave.hasWumpus()) {
-            output.println("You smell something terrible nearby.");
-            return;
+            return java.util.Optional.of("You smell something terrible nearby.");
         }
         if (cave.isBottomLessPit()) {
-            output.println("You feel a cold draft from a nearby cave.");
+            return java.util.Optional.of("You feel a cold draft from a nearby cave.");
         }
+        return java.util.Optional.empty();
+    }
+
+    public enum HazardOutcome {
+        SAFE,
+        BATS_RELOCATED,
+        PIT_DEATH,
+        WUMPUS_BUMPED,
+        WUMPUS_ATE_PLAYER
     }
 }
