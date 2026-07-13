@@ -12,6 +12,9 @@ class NoopCommentaryClientTest {
         NoopCommentaryClient client = new NoopCommentaryClient();
         CommentarySnapshot snapshot = new CommentarySnapshot(
                 "MOVE",
+                "MOVE_TO_ROOM",
+                5,
+                List.of(),
                 5,
                 "SAFE",
                 5,

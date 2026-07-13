@@ -39,6 +39,9 @@ class CommentaryDispatcherTest {
     private CommentarySnapshot sampleSnapshot() {
         return new CommentarySnapshot(
                 "SHOOT",
+                "SHOOT_THROUGH_CAVES",
+                9,
+                List.of(7, 9),
                 7,
                 "SHOT_MISSED",
                 4,

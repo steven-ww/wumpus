@@ -135,7 +135,15 @@ public class HuntService {
         movesTaken++;
         HazardChecker.HazardOutcome hazardOutcome = hazardChecker.checkForHazards(caves, player);
         String outcome = mapMoveOutcome(hazardOutcome);
-        dispatchCommentary("MOVE", moveResult.targetRoom(), outcome, player);
+        dispatchCommentary(
+                "MOVE",
+                "MOVE_TO_ROOM",
+                moveResult.targetRoom(),
+                List.of(),
+                player.getCurrentRoom(),
+                outcome,
+                player
+        );
         rememberActionSummary("MOVE", outcome, moveResult.targetRoom());
     }
 
@@ -152,13 +160,35 @@ public class HuntService {
     private void runShoot(Player player) {
         ShootAction.ShootResult shootResult = shootAction.shootArrow(caves, player);
         movesTaken++;
-        dispatchCommentary("SHOOT", shootResult.finalArrowRoom(), shootResult.outcome(), player);
+        Integer intendedTargetRoom = shootResult.path().isEmpty()
+                ? null
+                : shootResult.path().get(shootResult.path().size() - 1);
+        dispatchCommentary(
+                "SHOOT",
+                "SHOOT_THROUGH_CAVES",
+                intendedTargetRoom,
+                List.copyOf(shootResult.path()),
+                shootResult.finalArrowRoom(),
+                shootResult.outcome(),
+                player
+        );
         rememberActionSummary("SHOOT", shootResult.outcome(), shootResult.finalArrowRoom());
     }
 
-    private void dispatchCommentary(String action, Integer targetRoom, String outcome, Player player) {
+    private void dispatchCommentary(
+            String action,
+            String actionIntent,
+            Integer intendedTargetRoom,
+            List<Integer> nominatedPath,
+            Integer targetRoom,
+            String outcome,
+            Player player
+    ) {
         CommentarySnapshot snapshot = new CommentarySnapshot(
                 action,
+                actionIntent,
+                intendedTargetRoom,
+                nominatedPath,
                 targetRoom,
                 outcome,
                 player.getCurrentRoom(),

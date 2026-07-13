@@ -60,6 +60,20 @@ To run the project tests:
 ./gradlew test
 ```
 
+### Reactive commentary smoke test
+
+Run a one-command smoke check for the server commentary endpoint and focused client commentary tests:
+
+```bash
+./scripts/reactive-commentary-smoke.sh
+```
+
+Optional flags via environment variables:
+- `WUMPUS_SMOKE_START_SERVER=auto|always|never` (default `auto`)
+- `WUMPUS_SMOKE_RUN_CLIENT_TESTS=true|false` (default `true`)
+- `WUMPUS_COMMENTARY_URL` (default `http://localhost:8080/api/commentary`)
+- `WUMPUS_COMMENTARY_HEALTH_URL` (default `http://localhost:8080/q/health`)
+
 ### Checkstyle
 
 To run checkstyle:
