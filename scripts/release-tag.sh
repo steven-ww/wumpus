@@ -25,7 +25,6 @@ if [[ ! "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
   exit 1
 fi
 
-git fetch --tags --quiet
 
 if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
   echo "Tag '$tag' already exists locally. Aborting."
