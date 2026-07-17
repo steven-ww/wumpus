@@ -1,34 +1,80 @@
 package za.co.sww.game.wumpus.service;
 
-import za.co.sww.game.wumpus.domain.Cave;
-import za.co.sww.game.wumpus.domain.Player;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.jspecify.annotations.NonNull;
 import za.co.sww.game.wumpus.actions.HazardChecker;
 import za.co.sww.game.wumpus.actions.PlayerMovement;
 import za.co.sww.game.wumpus.actions.ShootAction;
+import za.co.sww.game.wumpus.commentary.CommentaryClient;
+import za.co.sww.game.wumpus.commentary.CommentaryDispatcher;
+import za.co.sww.game.wumpus.commentary.CommentarySnapshot;
+import za.co.sww.game.wumpus.commentary.HttpCommentaryClient;
+import za.co.sww.game.wumpus.commentary.NoopCommentaryClient;
+import za.co.sww.game.wumpus.domain.Cave;
+import za.co.sww.game.wumpus.domain.Player;
 import za.co.sww.game.wumpus.io.ConsoleInput;
 import za.co.sww.game.wumpus.io.ConsoleOutput;
-import org.jspecify.annotations.NonNull;
+import za.co.sww.game.wumpus.io.Input;
+import za.co.sww.game.wumpus.io.Output;
+import java.io.IOException;
+import java.io.InputStream;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.time.Duration;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Deque;
+import java.util.List;
+import java.util.Optional;
+import java.util.Properties;
 import java.util.Scanner;
 
 public class HuntService {
+    private static final int HISTORY_LIMIT = 3;
+    private static final Properties DEFAULT_CONFIG = loadDefaultConfig();
+
     Cave[] caves = new Cave[20];
     final CavesService cavesService = new CavesService();
+    private final Input input;
+    private final Output output;
+    private final CommentaryDispatcher commentaryDispatcher;
+    private final boolean includeHiddenState;
+    private final Deque<String> recentActionSummaries = new ArrayDeque<>();
+    private int movesTaken;
 
-    private final ConsoleInput input = new ConsoleInput();
-    private final ConsoleOutput output = new ConsoleOutput();
+    PlayerMovement playerMovement;
+    HazardChecker hazardChecker;
+    ShootAction shootAction;
 
-    PlayerMovement playerMovement = new PlayerMovement(input);
-    HazardChecker hazardChecker = new HazardChecker(output);
-    ShootAction shootAction = new ShootAction(input, output);
+    public HuntService() {
+        this(new ConsoleInput(), new ConsoleOutput());
+    }
+
+    public HuntService(Input input, Output output) {
+        this(input, output, createCommentaryDispatcher(output));
+    }
+
+    public HuntService(Input input, Output output, CommentaryDispatcher commentaryDispatcher) {
+        this.input = input;
+        this.output = output;
+        this.commentaryDispatcher = commentaryDispatcher;
+        this.includeHiddenState = Boolean.parseBoolean(readConfig("WUMPUS_COMMENTARY_INCLUDE_HIDDEN_STATE")
+                .orElse("false"));
+        this.playerMovement = new PlayerMovement(input);
+        this.hazardChecker = new HazardChecker(output);
+        this.shootAction = new ShootAction(input, output);
+    }
 
     public void runGame() {
         boolean gameRunning = true;
         do {
-
             Player player = new Player();
             caves = cavesService.buildCaves();
             player.setCurrentRoom(cavesService.initializeCaves(caves));
+            recentActionSummaries.clear();
+            movesTaken = 0;
 
             IO.println("Welcome to Hunt the Wumpus");
             IO.println();
@@ -57,9 +103,7 @@ public class HuntService {
 
             startGameLoop(player);
             gameRunning = input.readln("Play again? (Y/N) ").toUpperCase().equals("Y");
-
-        }
-        while (gameRunning);
+        } while (gameRunning);
     }
 
     public void startGameLoop(Player player) {
@@ -73,7 +117,8 @@ public class HuntService {
                 case "M":
                     runMove(player);
                     break;
-                default: output.println("That's not a valid action. Please enter S to shoot or M to move.");
+                default:
+                    output.println("That's not a valid action. Please enter S to shoot or M to move.");
             }
         }
         switch (player.getState()) {
@@ -87,13 +132,174 @@ public class HuntService {
     }
 
     private void runMove(Player player) {
-        playerMovement.movePlayer(caves, player);
-        hazardChecker.checkForHazards(caves, player);
+        PlayerMovement.MoveResult moveResult = playerMovement.movePlayer(caves, player);
+        if (!moveResult.moved()) {
+            return;
+        }
+        movesTaken++;
+        HazardChecker.HazardOutcome hazardOutcome = hazardChecker.checkForHazards(caves, player);
+        String outcome = mapMoveOutcome(hazardOutcome);
+        dispatchCommentary(
+                "MOVE",
+                "MOVE_TO_ROOM",
+                moveResult.targetRoom(),
+                List.of(),
+                player.getCurrentRoom(),
+                outcome,
+                player
+        );
+        rememberActionSummary("MOVE", outcome, moveResult.targetRoom());
     }
 
+    private String mapMoveOutcome(HazardChecker.HazardOutcome hazardOutcome) {
+        return switch (hazardOutcome) {
+            case SAFE -> "SAFE";
+            case BATS_RELOCATED -> "BATS_RELOCATED";
+            case PIT_DEATH -> "PIT_DEATH";
+            case WUMPUS_BUMPED -> "WUMPUS_BUMPED";
+            case WUMPUS_ATE_PLAYER -> "WUMPUS_BUMPED";
+        };
+    }
 
     private void runShoot(Player player) {
-        shootAction.shootArrow(caves, player);
+        ShootAction.ShootResult shootResult = shootAction.shootArrow(caves, player);
+        movesTaken++;
+        Integer intendedTargetRoom = shootResult.path().isEmpty()
+                ? null
+                : shootResult.path().get(shootResult.path().size() - 1);
+        dispatchCommentary(
+                "SHOOT",
+                "SHOOT_THROUGH_CAVES",
+                intendedTargetRoom,
+                List.copyOf(shootResult.path()),
+                shootResult.finalArrowRoom(),
+                shootResult.outcome(),
+                player
+        );
+        rememberActionSummary("SHOOT", shootResult.outcome(), shootResult.finalArrowRoom());
+    }
+
+    private void dispatchCommentary(
+            String action,
+            String actionIntent,
+            Integer intendedTargetRoom,
+            List<Integer> nominatedPath,
+            Integer targetRoom,
+            String outcome,
+            Player player
+    ) {
+        CommentarySnapshot snapshot = new CommentarySnapshot(
+                action,
+                actionIntent,
+                intendedTargetRoom,
+                nominatedPath,
+                targetRoom,
+                outcome,
+                player.getCurrentRoom(),
+                adjacentRooms(player),
+                hazardChecker.listHazardWarnings(caves, player.getCurrentRoom()),
+                player.getNumberOfArrows(),
+                movesTaken,
+                List.copyOf(recentActionSummaries),
+                buildHiddenState()
+        );
+        commentaryDispatcher.dispatch(snapshot);
+    }
+
+    private List<Integer> adjacentRooms(Player player) {
+        int room = player.getCurrentRoom();
+        if (room < 0 || room >= caves.length) {
+            return List.of();
+        }
+        return Arrays.stream(caves[room].getLinkedCaves()).boxed().toList();
+    }
+
+    private CommentarySnapshot.DebugHiddenState buildHiddenState() {
+        if (!includeHiddenState) {
+            return null;
+        }
+        Integer wumpusRoom = null;
+        List<Integer> pits = new ArrayList<>();
+        List<Integer> bats = new ArrayList<>();
+        for (int i = 0; i < caves.length; i++) {
+            if (caves[i].hasWumpus()) {
+                wumpusRoom = i;
+            }
+            if (caves[i].isBottomLessPit()) {
+                pits.add(i);
+            }
+            if (caves[i].hasBats()) {
+                bats.add(i);
+            }
+        }
+        return new CommentarySnapshot.DebugHiddenState(wumpusRoom, pits, bats);
+    }
+
+    private void rememberActionSummary(String action, String outcome, Integer targetRoom) {
+        String summary = action + " -> " + outcome;
+        if (targetRoom != null) {
+            summary = summary + " @ " + targetRoom;
+        }
+        recentActionSummaries.addLast(summary);
+        while (recentActionSummaries.size() > HISTORY_LIMIT) {
+            recentActionSummaries.removeFirst();
+        }
+    }
+
+    private static CommentaryDispatcher createCommentaryDispatcher(Output output) {
+        long timeoutMillis = parseLong(readConfig("WUMPUS_COMMENTARY_TIMEOUT_MS").orElse("1500"), 1500);
+        Optional<String> maybeUrl = readConfig("WUMPUS_COMMENTARY_URL");
+        if (maybeUrl.isEmpty()) {
+            return new CommentaryDispatcher(new NoopCommentaryClient(), output, timeoutMillis);
+        }
+        try {
+            CommentaryClient client = new HttpCommentaryClient(
+                    HttpClient.newHttpClient(),
+                    new ObjectMapper(),
+                    URI.create(maybeUrl.get()),
+                    Duration.ofMillis(timeoutMillis)
+            );
+            return new CommentaryDispatcher(client, output, timeoutMillis);
+        } catch (IllegalArgumentException ex) {
+            return new CommentaryDispatcher(new NoopCommentaryClient(), output, timeoutMillis);
+        }
+    }
+
+    private static Optional<String> readConfig(String key) {
+        String property = System.getProperty(key);
+        if (property != null && !property.isBlank()) {
+            return Optional.of(property.trim());
+        }
+        String environmentValue = System.getenv(key);
+        if (environmentValue != null && !environmentValue.isBlank()) {
+            return Optional.of(environmentValue.trim());
+        }
+        String defaultValue = DEFAULT_CONFIG.getProperty(key);
+        if (defaultValue != null && !defaultValue.isBlank()) {
+            return Optional.of(defaultValue.trim());
+        }
+        return Optional.empty();
+    }
+
+    private static long parseLong(String value, long defaultValue) {
+        try {
+            return Long.parseLong(value);
+        } catch (NumberFormatException ex) {
+            return defaultValue;
+        }
+    }
+
+    private static Properties loadDefaultConfig() {
+        Properties defaults = new Properties();
+        try (InputStream inputStream =
+                     HuntService.class.getClassLoader().getResourceAsStream("wumpus.properties")) {
+            if (inputStream != null) {
+                defaults.load(inputStream);
+            }
+        } catch (IOException ignored) {
+            // Defaults are optional; if unavailable the app relies on env/system properties.
+        }
+        return defaults;
     }
 
     private void printPlayerCave(@NonNull Player player) {
@@ -102,5 +308,4 @@ public class HuntService {
                 caves[player.getCurrentRoom()].getLinkedCaves()[1] + " and " +
                 caves[player.getCurrentRoom()].getLinkedCaves()[2]);
     }
-
 }
