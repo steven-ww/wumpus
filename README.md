@@ -74,6 +74,15 @@ Optional flags via environment variables:
 - `WUMPUS_COMMENTARY_URL` (default `http://localhost:8080/api/commentary`)
 - `WUMPUS_COMMENTARY_HEALTH_URL` (default `http://localhost:8080/q/health`)
 
+### Commentary defaults for standalone/native runs
+
+The game ships with built-in commentary defaults in `src/main/resources/wumpus.properties`:
+- `WUMPUS_COMMENTARY_URL=https://api.rwars.steven-webber.com/wumpus/api/commentary`
+- `WUMPUS_COMMENTARY_TIMEOUT_MS=5000`
+
+You can still override these at runtime with environment variables or JVM system properties
+(for example `-DWUMPUS_COMMENTARY_URL=...`).
+
 ### Checkstyle
 
 To run checkstyle:

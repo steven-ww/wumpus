@@ -32,3 +32,15 @@ checkstyle {
 tasks.named<Test>("test") {
     useJUnitPlatform()
 }
+
+tasks.named<Jar>("jar") {
+    manifest {
+        attributes["Main-Class"] = application.mainClass.get()
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from({
+        configurations.runtimeClasspath.get()
+            .filter { it.name.endsWith(".jar") }
+            .map { zipTree(it) }
+    })
+}

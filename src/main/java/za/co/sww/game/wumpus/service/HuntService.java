@@ -16,6 +16,8 @@ import za.co.sww.game.wumpus.io.ConsoleInput;
 import za.co.sww.game.wumpus.io.ConsoleOutput;
 import za.co.sww.game.wumpus.io.Input;
 import za.co.sww.game.wumpus.io.Output;
+import java.io.IOException;
+import java.io.InputStream;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -26,10 +28,12 @@ import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.Scanner;
 
 public class HuntService {
     private static final int HISTORY_LIMIT = 3;
+    private static final Properties DEFAULT_CONFIG = loadDefaultConfig();
 
     Cave[] caves = new Cave[20];
     final CavesService cavesService = new CavesService();
@@ -270,6 +274,10 @@ public class HuntService {
         if (environmentValue != null && !environmentValue.isBlank()) {
             return Optional.of(environmentValue.trim());
         }
+        String defaultValue = DEFAULT_CONFIG.getProperty(key);
+        if (defaultValue != null && !defaultValue.isBlank()) {
+            return Optional.of(defaultValue.trim());
+        }
         return Optional.empty();
     }
 
@@ -279,6 +287,19 @@ public class HuntService {
         } catch (NumberFormatException ex) {
             return defaultValue;
         }
+    }
+
+    private static Properties loadDefaultConfig() {
+        Properties defaults = new Properties();
+        try (InputStream inputStream =
+                     HuntService.class.getClassLoader().getResourceAsStream("wumpus.properties")) {
+            if (inputStream != null) {
+                defaults.load(inputStream);
+            }
+        } catch (IOException ignored) {
+            // Defaults are optional; if unavailable the app relies on env/system properties.
+        }
+        return defaults;
     }
 
     private void printPlayerCave(@NonNull Player player) {
