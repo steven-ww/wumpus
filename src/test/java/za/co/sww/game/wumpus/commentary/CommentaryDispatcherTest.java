@@ -20,7 +20,9 @@ class CommentaryDispatcherTest {
         dispatcher.dispatch(sampleSnapshot());
 
         assertEquals("Narrator is thinking...", output.messages().get(0));
-        assertEquals("Narrator: Solid plan. Terrible execution.", output.messages().get(1));
+        assertEquals("", output.messages().get(1));
+        assertEquals("Narrator: Solid plan. Terrible execution.", output.messages().get(2));
+        assertEquals("-------------------------------", output.messages().get(3));
     }
 
     @Test
@@ -32,8 +34,9 @@ class CommentaryDispatcherTest {
 
         dispatcher.dispatch(sampleSnapshot());
 
-        assertEquals(1, output.messages().size());
+        assertEquals(3, output.messages().size());
         assertTrue(output.messages().contains("Narrator is thinking..."));
+        assertTrue(output.messages().contains("-------------------------------"));
     }
 
     private CommentarySnapshot sampleSnapshot() {

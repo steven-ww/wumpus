@@ -19,11 +19,13 @@ public class CommentaryDispatcher {
 
     public void dispatch(CommentarySnapshot snapshot) {
         output.println("Narrator is thinking...");
+        output.println("");
         Optional<String> maybeCommentary = CompletableFuture
                 .supplyAsync(() -> commentaryClient.fetchCommentary(snapshot))
                 .completeOnTimeout(Optional.empty(), timeoutMillis, TimeUnit.MILLISECONDS)
                 .exceptionally(ignored -> Optional.empty())
                 .join();
         maybeCommentary.ifPresent(commentary -> output.println("Narrator: " + commentary));
+        output.println("-------------------------------");
     }
 }
