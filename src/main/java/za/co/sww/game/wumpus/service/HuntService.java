@@ -32,7 +32,7 @@ import java.util.Properties;
 import java.util.Scanner;
 
 public class HuntService {
-    private static final int HISTORY_LIMIT = 3;
+    private static final int HISTORY_LIMIT = 20;
     private static final Properties DEFAULT_CONFIG = loadDefaultConfig();
 
     Cave[] caves = new Cave[20];
@@ -110,6 +110,7 @@ public class HuntService {
         while (player.getState() == Player.PlayerState.ALIVE) {
             printPlayerCave(player);
             hazardChecker.printHazards(caves, player.getCurrentRoom());
+            output.println("");
             switch (input.readln("Shoot or move? (S/M) ").toUpperCase()) {
                 case "S":
                     runShoot(player);
@@ -123,9 +124,11 @@ public class HuntService {
         }
         switch (player.getState()) {
             case WINNER:
+                output.println("");
                 output.println("Congratulations! You have slain the Wumpus and won the game!");
                 break;
             case DEAD:
+                output.println("");
                 output.println("Game over. Better luck next time!");
                 break;
         }
