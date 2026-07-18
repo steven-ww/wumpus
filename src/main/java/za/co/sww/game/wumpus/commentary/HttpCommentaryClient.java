@@ -32,11 +32,12 @@ public class HttpCommentaryClient implements CommentaryClient {
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(requestJson, StandardCharsets.UTF_8))
                     .build();
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<byte[]> response = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
             if (response.statusCode() < 200 || response.statusCode() >= 300) {
                 return Optional.empty();
             }
-            CommentaryPayload payload = objectMapper.readValue(response.body(), CommentaryPayload.class);
+            String responseBody = new String(response.body(), StandardCharsets.UTF_8);
+            CommentaryPayload payload = objectMapper.readValue(responseBody, CommentaryPayload.class);
             if (payload.commentary() == null || payload.commentary().isBlank()) {
                 return Optional.empty();
             }
