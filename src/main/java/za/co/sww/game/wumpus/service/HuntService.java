@@ -122,16 +122,17 @@ public class HuntService {
                     output.println("That's not a valid action. Please enter S to shoot or M to move.");
             }
         }
-        switch (player.getState()) {
-            case WINNER:
-                output.println("");
-                output.println("Congratulations! You have slain the Wumpus and won the game!");
-                break;
-            case DEAD:
-                output.println("");
-                output.println("Game over. Better luck next time!");
-                break;
-        }
+        // Shouldn't be needed as the lLM should acknowledge the game outcome.
+//        switch (player.getState()) {
+//            case WINNER:
+//                output.println("");
+//                output.println("Congratulations! You have slain the Wumpus and won the game!");
+//                break;
+//            case DEAD:
+//                output.println("");
+//                output.println("Game over. Better luck next time!");
+//                break;
+//        }
     }
 
     private void runMove(Player player) {
@@ -160,7 +161,7 @@ public class HuntService {
             case BATS_RELOCATED -> "BATS_RELOCATED";
             case PIT_DEATH -> "PIT_DEATH";
             case WUMPUS_BUMPED -> "WUMPUS_BUMPED";
-            case WUMPUS_ATE_PLAYER -> "WUMPUS_BUMPED";
+            case WUMPUS_ATE_PLAYER -> "WUMPUS_ATE_PLAYER";
         };
     }
 
